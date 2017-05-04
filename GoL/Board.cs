@@ -9,12 +9,12 @@ namespace GoL
     class Board
     {
         private int size;
-        private string[,] table;
+        private bool[,] table;
 
         public Board(int _size)
         {
             size = _size;
-            table = new string[size,size];
+            table = new bool[size,size];
         }
         public void initialize_rand()
         {
@@ -24,98 +24,84 @@ namespace GoL
                 for (int j = 0; j < size; j++)
                 {
                         if (rnd.Next(0,2) == 0)
-                            table[i, j] = "_";
+                            table[i, j] = false;
                         else
-                            table[i, j] = "*";
+                            table[i, j] = true;
                 }
-        }
-
-        public void initialize_zeros(ref string[,] table)
-        {
-            for (int i = 0; i < size; i++)
-                for (int j = 0; j < size; j++)
-                    table[i, j] = "_";
         }
 
         public void initialize_test()
         {
             for (int i = 0; i < size; i++)
                 for (int j = 0; j < size; j++)
-                    table[i, j] = "_";
-            table[1, 1] = "*";
-            table[2, 1] = "*";
-            table[3, 1] = "*";
+                    table[i, j] = false;
+            table[1, 1] = true;
+            table[2, 1] = true;
+            table[3, 1] = true;
         }
 
         public void print_Table()
         {
-            System.Console.Write(" 01234\n");
             for (int i = 0; i < size; i++)
             {
-                System.Console.Write(i);
                 for (int j = 0; j < size; j++)
-                    System.Console.Write(table[i, j]);
+                    System.Console.Write(table[i, j] ? "*" : "_");
                 System.Console.Write("\n");
             }
         }
 
         private int get_neighbours(int i, int j)
         {
-            int[] kierunki_i, kierunki_j;
+            int[] direction_i, direction_j;
             if (i == 0)
-                kierunki_i = new int[2] { 0, 1 };
+                direction_i = new int[2] { 0, 1 };
             else if (i == size - 1)
-                kierunki_i = new int[2] { -1, 0 };
+                direction_i = new int[2] { -1, 0 };
             else
-                kierunki_i = new int[3] { -1, 0, 1 };
+                direction_i = new int[3] { -1, 0, 1 };
             if (j == 0)
-                kierunki_j = new int[2] { 0, 1 };
+                direction_j = new int[2] { 0, 1 };
             else if (j == size - 1)
-                kierunki_j = new int[2] { -1, 0 };
+                direction_j = new int[2] { -1, 0 };
             else
-                kierunki_j = new int[3] { -1, 0, 1 };
-            int ilosc_sasiadow = 0;
-            
-            //foreach(int value_i in kierunki_i)
-            for(int ii = 0; ii < kierunki_i.Length; ii++)
-                for(int jj = 0; jj < kierunki_j.Length; jj++)
-                //foreach(int value_j in kierunki_j)
+                direction_j = new int[3] { -1, 0, 1 };
+            int a_neighbours = 0;
+
+            foreach(int value_i in direction_i)
+                foreach(int value_j in direction_j)
                 {
-                    //System.Console.WriteLine(i + " " + j + " " + kierunki_i[ii] + " " + kierunki_j[jj]);
-                    //if (value_j == value_i && value_i == 0)
-                    if (kierunki_j[jj] == 0 && kierunki_i[ii] == 0)
+                    if (value_i == 0 && value_j == 0)
                         continue;
-                    System.Console.WriteLine(i + " " + j + "\t" + kierunki_i[ii] + " " + kierunki_j[jj] + "\t" + (i+kierunki_i[ii]) + " " + (j+kierunki_j[jj]) + "\t" + table[i + kierunki_i[ii], j + kierunki_j[jj]]);
-                    if (table[i + kierunki_i[ii], j + kierunki_j[jj]] == "*")
-                    {
-                        //System.Console.WriteLine(i + " " + j + " " + kierunki_i[ii] + " " + kierunki_j[jj]);
-                        ilosc_sasiadow++;
-                    }
+                    if(table[i+value_i,j+value_j] == true)
+                        a_neighbours++;
                 }
-            return ilosc_sasiadow;
+            return a_neighbours;
         }
 
         public void next_generation()
         {
-            string[,] table_next = table;//new string[size,size];
+            bool[,] table_next = new bool[size,size];
+            for (int i = 0; i < size; i++)
+                for (int j = 0; j < size; j++)
+                    table_next[i, j] = table[i, j];
             int tmp;
             for (int i = 0; i < size; i++)
             {
                 for (int j = 0; j < size; j++)
                 {
                     tmp = get_neighbours(i, j);
-                    //1 - < 2 umiera - pomijamy bo i tak jest zero w table_next
-                    if (tmp < 2 && table[i,j] == "*")
-                        table_next[i, j] = "_";
-                    //2 - = 2,3 przeżywa
-                    else if ((tmp == 2 || tmp == 3) && table[i, j] == "*")
-                        table_next[i, j] = "*";
-                    //3 - > 3 umiera
-                    else if (tmp > 3 && table[i,j] == "*")
-                        table_next[i, j] = "_";
-                    //4 - == 3 - narodziny
-                    else if (tmp == 3 && table[i, j] == "_")
-                        table_next[i, j] = "*";
+                    //1 - < 2 die out off loneliness
+                    if (tmp < 2 && table[i,j] == true)
+                        table_next[i, j] = false;
+                    //2 - = 2,3 lives
+                    else if ((tmp == 2 || tmp == 3) && table[i, j] == true)
+                        table_next[i, j] = true;
+                    //3 - > 3 dies
+                    else if (tmp > 3 && table[i,j] == true)
+                        table_next[i, j] = false;
+                    //4 - == 3 - birth
+                    else if (tmp == 3 && table[i, j] == false)
+                        table_next[i, j] = true;
                 }
             }
             table = table_next;
