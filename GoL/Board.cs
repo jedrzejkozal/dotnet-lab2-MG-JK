@@ -81,9 +81,6 @@ namespace GoL
         public void next_generation()
         {
             bool[,] table_next = new bool[size,size];
-            for (int i = 0; i < size; i++)
-                for (int j = 0; j < size; j++)
-                    table_next[i, j] = table[i, j];
             int tmp;
             for (int i = 0; i < size; i++)
             {
